@@ -4,10 +4,8 @@
 import os
 from setuptools import setup
 
-f = open(os.path.join(os.path.dirname(__file__), 'README.rst'))
-readme = f.read()
-f.close()
-
+with open(os.path.join(os.path.dirname(__file__), 'README.rst')) as f:
+    readme = f.read()
 setup(
     name='django-xmpp',
     version='0.4',

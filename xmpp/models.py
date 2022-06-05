@@ -38,7 +38,7 @@ class XMPPAccount(models.Model):
         except XMPPAccount.DoesNotExist:
             # Need to generate XMPPAccount object with password that will be later
             # used by ejabberd to authenticate webapp
-            xmpp_jid = '%s@%s' % (user.username.lower(), settings.XMPP_DOMAIN)
+            xmpp_jid = f'{user.username.lower()}@{settings.XMPP_DOMAIN}'
             # get a random uuid as password
             xmpp_password = uuid.uuid4().hex
             xmpp_account = XMPPAccount.objects.create(jid=xmpp_jid,
@@ -62,11 +62,15 @@ class XMPPAccount(models.Model):
         if not update_delta:
             return False
 
-        if not force:
-            if self.updated and self.updated > timezone.now()-datetime.timedelta(hours=update_delta):
-                return False
+        if (
+            not force
+            and self.updated
+            and self.updated
+            > timezone.now() - datetime.timedelta(hours=update_delta)
+        ):
+            return False
 
-        lg.info("Updating vCard for %s" % self.jid)
+        lg.info(f"Updating vCard for {self.jid}")
         try:
             con = self.get_connection()
             con.set_vcard(self.user.get_full_name() or self.user.username)
@@ -75,10 +79,10 @@ class XMPPAccount(models.Model):
                     avatar_data = urllib.urlopen(get_gravatar_url(self.user.email)).read()
                     con.set_avatar(avatar_data, mime_type='image/jpeg')
                 except Exception as e:
-                    lg.exception("Failed to set XMPP avatar for %s" % self.jid, e)
+                    lg.exception(f"Failed to set XMPP avatar for {self.jid}", e)
             con.disconnect()
         except Exception as e:
-            lg.exception("Failed to update vCard for %s" % self.jid, e)
+            lg.exception(f"Failed to update vCard for {self.jid}", e)
 
         self.updated = timezone.now()
         self.save()

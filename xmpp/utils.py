@@ -16,7 +16,7 @@ def get_conversejs_settings(settings_dict=None):
     }
 
     try:
-        converse_settings.update(settings.XMPP_CONVERSEJS_SETTINGS)
+        converse_settings |= settings.XMPP_CONVERSEJS_SETTINGS
     except AttributeError:
         pass
 

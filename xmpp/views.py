@@ -17,10 +17,14 @@ class XhrUserSearchView(View):
     def get(self, *args, **kwargs):
         query = self.request.GET.get('q', '')
         users = User.objects.filter(Q(username__icontains=query) | Q(first_name__icontains=query) | Q(last_name__icontains=query))
-        users_jid = map(lambda user: {
-            'id': '%s@%s' % (user.username.lower(), settings.XMPP_DOMAIN),
-            'fullname': user.get_full_name() or user.username,
-        }, users)
+        users_jid = map(
+            lambda user: {
+                'id': f'{user.username.lower()}@{settings.XMPP_DOMAIN}',
+                'fullname': user.get_full_name() or user.username,
+            },
+            users,
+        )
+
 
         return HttpResponse(json.dumps(users_jid), 'application/javascript')
 
@@ -32,8 +36,7 @@ class XhrAutoJoinView(View):
     @method_decorator(login_required)
     def get(self, *args, **kwargs):
         account = XMPPAccount.get_or_create(self.request.user)
-        auto_join = account.auto_join.all()
-        if auto_join:
+        if auto_join := account.auto_join.all():
             jids = map(lambda join: {
                 'jid': join.jid
             }, auto_join)
@@ -63,14 +66,13 @@ class XhrAutoJoinView(View):
         msg = None
         try:
             join_obj = XMPPAutoJoin.objects.get(account=account, jid=jid)
-            if action in ['remove', 'toggle']:
+            if action in {'remove', 'toggle'}:
                 join_obj.delete()
                 msg = "Auto join to '%s' removed" % jid
         except XMPPAutoJoin.DoesNotExist:
             if action == 'remove':
                 msg = "Auto join to '%s' does not exist" % jid
-                pass
-            elif action in ['add', 'toggle']:
+            elif action in {'add', 'toggle'}:
                 msg = "Added auto join to '%s'" % jid
                 join_obj = XMPPAutoJoin(account=account, jid=jid)
                 join_obj.save()

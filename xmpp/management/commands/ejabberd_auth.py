@@ -47,20 +47,23 @@ class Command(BaseCommand):
         b = struct.pack('>hh',
                         2,
                         1 if answer else 0)
-        self.logger.debug("To jabber: %s" % b)
+        self.logger.debug(f"To jabber: {b}")
         sys.stdout.write(b.decode("utf-8"))
         sys.stdout.flush()
 
     def auth(self, username=None, server="localhost", password=None):
-        self.logger.debug("Authenticating %s with password %s on server %s" % (username, password, server))
+        self.logger.debug(
+            f"Authenticating {username} with password {password} on server {server}"
+        )
+
         try:
             # First try authenticating with generated webapp account password
             xmpp_account = XMPPAccount.objects.get(user__username__iexact=username, password=password)
             user = xmpp_account.user
-            self.logger.info("Authenticated account %s with webapp XMPPAccount" % username)
+            self.logger.info(f"Authenticated account {username} with webapp XMPPAccount")
         except XMPPAccount.DoesNotExist:
             user = authenticate(username=username, password=password)
-            self.logger.info("Authenticated user %s with password" % username)
+            self.logger.info(f"Authenticated user {username} with password")
 
         return user and user.is_active
 
@@ -68,14 +71,13 @@ class Command(BaseCommand):
         """
         Checks if the user exists and is active
         """
-        self.logger.debug("Validating %s on server %s" % (username, server))
+        self.logger.debug(f"Validating {username} on server {server}")
         try:
             user = get_user_model().objects.get(username__iexact=username)
             if user.is_active:
                 return True
-            else:
-                self.logger.warning("User %s is disabled" % username)
-                return False
+            self.logger.warning(f"User {username} is disabled")
+            return False
         except User.DoesNotExist:
             return False
 
@@ -83,7 +85,10 @@ class Command(BaseCommand):
         """
         Handles password change
         """
-        self.logger.debug("Changing password to %s with new password %s on server %s" % (username, password, server))
+        self.logger.debug(
+            f"Changing password to {username} with new password {password} on server {server}"
+        )
+
         try:
             user = get_user_model().objects.get(username__iexact=username)
             user.set_password(password)
@@ -103,7 +108,7 @@ class Command(BaseCommand):
             while True:
                 success = False
                 data = self.from_ejabberd()
-                self.logger.debug("Command is %s" % data[0])
+                self.logger.debug(f"Command is {data[0]}")
                 if data[0] == "auth":
                     success = self.auth(data[1], data[2], data[3])
                 elif data[0] == "isuser":
@@ -115,5 +120,8 @@ class Command(BaseCommand):
                 if not options.get("run_forever", True):
                     break
         except Exception as e:
-            self.logger.error("An error has occurred during eJabberd external authentication: %s" % e)
+            self.logger.error(
+                f"An error has occurred during eJabberd external authentication: {e}"
+            )
+
             self.to_ejabberd(success)

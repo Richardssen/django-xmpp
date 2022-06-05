@@ -19,9 +19,11 @@ def xmpp_domain():
 
 @register.simple_tag
 def xmpp_jid(user):
-    return '%s@%s' % (user.username.lower(), xmpp_domain())
+    return f'{user.username.lower()}@{xmpp_domain()}'
 
 
 @register.simple_tag
 def xmpp_domain_muc():
-    return getattr(settings, 'XMPP_DOMAIN_MUC', 'conference.%s' % settings.XMPP_DOMAIN)
+    return getattr(
+        settings, 'XMPP_DOMAIN_MUC', f'conference.{settings.XMPP_DOMAIN}'
+    )
